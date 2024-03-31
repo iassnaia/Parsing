@@ -6,88 +6,45 @@
 ##Получите название заведения, его адрес и рейтинг для каждого из них.
 ##Скрипт должен вывести название и адрес и рейтинг каждого заведения в консоль.
 
-#1
 import requests
-import json
+import os
+from dotenv import load_dotenv
 
-params = {'q': 'name', 'id': '69846294'}
-
-url = 'https://api.github.com'
-
-user = 'iassnaia'
-
-responce = requests.get(f'{url}/users/{user}/repos')
-
-with open('data.json', 'w') as f:
-    json.dump(responce.json(), f)
-
-for i in responce.json():
-    print(i['full_name'])
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 
-# 2. 
-import requests
+def search_places_by_category_and_city(category, city):
+    url = "https://api.foursquare.com/v3/places/search"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": os.getenv("ADDITIONAL_API_KEY")
+    }
+    params = {
+        "query": category,
+        "near": city,
+        "limit": 10
+    }
 
-import json
+    response = requests.get(url, headers=headers, params=params)
 
-url = 'https://api.vk.com'
-
-method = 'friends.getOnline'
-
-user_id = '474319172'
-
-access_token = ''
-
-responce = requests.get(f'{url}/method/{method}?v=5.52&access_token={access_token}')
-
-with open('data.json', 'w') as f:
-    json.dump(responce.json(), f)
-
-print(responce.json())
-
-{'response': [47207942]}
-
-Для себя Парсинг сайта Auto.ru
-
-import requests
-
-import json
-
-URL = 'https://auto.ru/-/ajax/desktop/listing/'
-
-PARAMS = {
-            # 'catalog_filter' : [{"mark": "BAW"}],
-            'section': "used",
-            'region': "moskva",
-            'category': "trucks",
-            'sort': "fresh_relevance_1-desc",
-            'page': "pag"
-        }
-
-HEADERS = {
-    'Accept': '*/*',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-    'Connection': 'keep-alive',
-    'Content-Length': '137',
-    'content-type': 'application/json',
-    'Cookie': '_csrf_token=1c0ed592ec162073ac34d79ce511f0e50d195f763abd8c24; autoru_sid=a%3Ag5e3b198b299o5jhpv6nlk0ro4daqbpf.fa3630dbc880ea80147c661111fb3270%7C1580931467355.604800.8HnYnADZ6dSuzP1gctE0Fw.cd59AHgDSjoJxSYHCHfDUoj-f2orbR5pKj6U0ddu1G4; autoruuid=g5e3b198b299o5jhpv6nlk0ro4daqbpf.fa3630dbc880ea80147c661111fb3270; suid=48a075680eac323f3f9ad5304157467a.bc50c5bde34519f174ccdba0bd791787; from_lifetime=1580933172327; from=yandex; X-Vertis-DC=myt; crookie=bp+bI7U7P7sm6q0mpUwAgWZrbzx3jePMKp8OPHqMwu9FdPseXCTs3bUqyAjp1fRRTDJ9Z5RZEdQLKToDLIpc7dWxb90=; cmtchd=MTU4MDkzMTQ3MjU0NQ==; yandexuid=1758388111580931457; bltsr=1; navigation_promo_seen-recalls=true',
-    'Host': 'auto.ru',
-    'origin': 'https://auto.ru',
-    'Referer': 'https://auto.ru/moskva/truck/used/',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
-    'x-client-app-version': '202002.03.092255',
-    'x-client-date': '1580933207763',
-    'x-csrf-token': '1c0ed592ec162073ac34d79ce511f0e50d195f763abd8c24',
-    'x-page-request-id': '60142cd4f0c0edf51f96fd0134c6f02a',
-    'x-requested-with': 'fetch'
-}
+    if response.status_code == 200:
+        places = response.json().get("results", [])
+        if places:
+            for place in places:
+                name = place.get("name")
+                location = place.get("location", {})
+                address = location.get("address", "Адрес не указан")
+                rating = place.get("rating", "Рейтинг не указан")
+                print(f"Название: {name}, Адрес: {address}, Рейтинг: {rating}")
+        else:
+            print("По вашему запросу заведения не найдены.")
+    else:
+        print(f"Произошла ошибка при обращении к API. Код ошибки: {response.status_code}")
 
 
-responce = requests.post(URL, json=PARAMS, headers=HEADERS)
-
-
-with open('data.json', 'w') as f:
-    json.dump(responce.json(), f)
-
-print(responce.json())
+if __name__ == "__main__":
+    category = input("Введите интересующую вас категорию (например, кофейня, музей, парк): ")
+    city = input("Введите название города (например, Париж, Милан): ")
+    search_places_by_category_and_city(category, city)
